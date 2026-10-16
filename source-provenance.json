@@ -1,0 +1,27 @@
+{
+  "repository": "payables",
+  "head": "3e5467ae9dfec0014530e6ecb9051a2a6b193baa",
+  "scope": "working-tree snapshots including concurrent uncommitted supplier additions; no backend state or secrets copied",
+  "sha256": {
+    "web/src/contributor.tsx": "55d86dec923bb113e918e303e10cf3980140b871fa690693cf9eeff2fda7a58c",
+    "src/compensation-contract.ts": "5feac51e69aa7d067635eb92261bcdcb3a96c77823a611764507f4a442ad232c",
+    "web/src/components/ui/button.tsx": "20d3bf2ba4413d0430ee968f4fd26534baaecf0b25571e2d6c5834ca9db62bd7",
+    "web/src/components/ui/card.tsx": "77c11b2e2c00a389a19d990a26e8f112e2259410164a0d56214f6ac11560e7ee",
+    "web/src/components/ui/native-select.tsx": "75273b504b12035baf2660eebe1f8252cec2b2b5e63b1f8640982fce73a393ae",
+    "web/src/components/ui/alert.tsx": "2cf2f32610e51fcb05d63ee7ceea04150d0f4e72bb2f3ad4659f9978788169d7",
+    "web/src/components/ui/empty.tsx": "c922078019779d4f665a98f83b418c4fdba0f2b8acc494a2570034faa2892d31",
+    "web/src/components/ui/badge.tsx": "06b8e360d37583a03172bd6428dab0be7156f8567392073fa4c281df5f46f4d3",
+    "web/src/components/ui/skeleton.tsx": "df50ec9e8eee4692a3a6183977162ccebb2d995d71e529af5ceec0ebe34bf47d",
+    "web/src/features/payables/compensation-ui.tsx": "282a373383ea055fb8e5b47090d7b2afaa8f956f2d3177044e1c0b3726116b2d",
+    "web/src/components/ui/field.tsx": "b02ae350863c1a564d1bb283589ea61f3adde373750573d62a9bbb2d9059e4a5",
+    "web/src/components/ui/input.tsx": "b5d080d6ff0cdbce9939e06ed2e0192e4da895097b024d402180c0673d030c63",
+    "web/src/components/ui/textarea.tsx": "9f745ae084908069c6100f740d2bba717bf879dc36d0fd430c0dac1b3caf8c5f",
+    "web/src/shared/brand.ts": "647e9119e73f1acf4a6abda5632fab5d0a37f77f27aa7915706c4fa7855ca9bd",
+    "web/src/styles.css": "9c6d4b9f689380b001a0fc6515e41d6e6987a9d4097b02380b0c855f97c0cd6e",
+    "src/invoice-page.ts": "1056fd484401524895ef7e6a0aa6bc9d7e067719ecec73f2c4b65b3515d2139a",
+    "src/invoice-browser.js": "4889f6ba17d17c8044c51d4b8bc7792086f5be12af97811db8a241106bf3ef2d",
+    "web/postcss.config.mjs": "a1a188221f064d964dd9958c3d48b0c23252fabbeb6099d95ee8e15c764718b0"
+  },
+  "verifiedUpstreamCommit": "97ddec7",
+  "verification": "All originally recorded supplier source hashes matched after the concurrent Payables commit."
+}

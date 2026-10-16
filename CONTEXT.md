@@ -1,0 +1,3 @@
+# Invoices vocabulary
+
+Owner: wallet or DAO authorizing payment. Supplier/payee: the signed-in account receiving funds. Invoice: retained request with one payment identity. Contribution report: submitted work and impact for owner compensation review; submission is not payment. Work order: fixed recipient, amount and deadline with its own authorization. Operation: the backend's recorded money action. Unresolved: unknown outcome that cannot justify a replacement. Proto owns sessions, records, authorization and guarded dispatch. Payables owns the owner review experience. Invoices owns supplier presentation and its release.
