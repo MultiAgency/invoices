@@ -10,7 +10,7 @@ import { promisify } from 'node:util';
 import { chromium } from 'playwright';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
-const { conformingRoute } = require('./fixtures/contract.cjs'), { keepFailure } = require('./fixtures/task.cjs');
+const { conformingRoute } = require('./fixtures/contract.cjs'), { keepFailure, requireEvery } = require('./fixtures/task.cjs');
 
 const dist = resolve(process.argv[2] || 'dist'), work = mkdtempSync(join(tmpdir(), 'invoices-workflow-'));
 const origin = 'https://localhost:4433';
@@ -86,6 +86,9 @@ let signedIn = false;
 // The step script answers the page's confirmations; this client listens without answering so it never dismisses them.
 context.pages()[0].on('dialog', () => {});
 const log = [];
+// One flow: it must run to completion, or the process fails (an await that never settles would otherwise exit 0).
+const ran = new Set();
+requireEvery('workflow', [{ name: 'workflow' }], ran, () => ({ scenario: ran.size ? undefined : 'workflow', pages: [{ page: context.pages()[0], log }] }));
 context.pages()[0].on('console', message => log.push(`[${message.type()}] ${message.text()}`));
 context.pages()[0].on('pageerror', error => log.push(`[pageerror] ${error.stack ?? error.message}`));
 await context.pages()[0].goto(origin + '/');
@@ -166,4 +169,4 @@ try {
 } catch (error) {
   console.error(`Kept failure diagnostics: ${await keepFailure('workflow', 'workflow', error, [{ page: context.pages()[0], log }])}`);
   throw error;
-} finally { await context.close(); }
+} finally { ran.add('workflow'); await context.close(); }

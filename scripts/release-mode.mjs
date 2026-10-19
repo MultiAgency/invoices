@@ -1,6 +1,6 @@
 // The SDK dependency spec decides the mode: `link:` for development against Proto's SDK checkout, or the vendored
 // tarball for a release candidate. Release steps (freeze, Docker, CI) run only on a release candidate.
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,6 +32,22 @@ export function freezeRefusal({ tarball, built }) {
   return null;
 }
 
+/**
+ * CI only: test a development commit against the vendored tarball for this run, by pointing package.json at it in
+ * the runner's checkout. Nothing is committed, and a build made this way is never a release candidate.
+ */
+export function useVendored(dir = '.') {
+  const tarballs = readdirSync(join(dir, 'vendor')).filter(file => /^multiagency-sdk-[\d.]+\.tgz$/.test(file));
+  if (tarballs.length !== 1) throw new Error(`exactly one vendored SDK tarball is needed, found ${tarballs.join(', ') || 'none'}`);
+  const file = join(dir, 'package.json'), pkg = JSON.parse(readFileSync(file, 'utf8'));
+  pkg.dependencies[SDK] = `file:vendor/${tarballs[0]}`;
+  writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
+  return tarballs[0];
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  try { console.log(`${SDK}: ${requireRelease().tarball}`); } catch (error) { console.error(error.message); process.exit(1); }
+  try {
+    if (process.argv[2] === '--use-vendored') console.log(`development commit: testing against vendor/${useVendored()}`);
+    else console.log(`${SDK}: ${requireRelease().tarball}`);
+  } catch (error) { console.error(error.message); process.exit(1); }
 }

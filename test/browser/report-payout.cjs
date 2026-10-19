@@ -340,6 +340,29 @@ async function reportPlace(browser, root) {
     assert.equal((await draft()).id, started.id, `${base}: a reload keeps the draft's identity`);
     assert.equal(await page.locator('#agreement option:checked').innerText(), 'November design');
 
+    // A link to other terms never shows a different agreement's draft as if it were the linked one. A blank draft
+    // (nothing typed, never sent) gives way to the linked terms; one with content stays, and the page says why.
+    await page.evaluate(key => localStorage.removeItem(key), draftKey);
+    await at('/report'); await list.waitFor();
+    await page.getByRole('button', { name: 'New report', exact: true }).click(); await form.waitFor();
+    const blank = await draft();
+    await at(`/report?agreement=${november.id}`); await form.waitFor();
+    assert.equal(await page.locator('#agreement option:checked').innerText(), 'November design', `${base}: a blank draft gives way to the linked terms`);
+    assert.notEqual((await draft()).id, blank.id, `${base}: the linked report gets its own identity`);
+    await page.evaluate(key => localStorage.removeItem(key), draftKey);
+    await at('/report'); await list.waitFor();
+    await page.getByRole('button', { name: 'New report', exact: true }).click(); await form.waitFor();
+    await page.getByLabel('Contributions', { exact: true }).fill('October work in progress');
+    await page.waitForFunction(key => JSON.parse(localStorage.getItem(key) || 'null')?.report.contributions === 'October work in progress', draftKey);
+    const kept = await draft();
+    await at(`/report?agreement=${november.id}`); await list.waitFor();
+    await page.getByText('You have an unsent report on October engineering. Resume it and save or submit it, then open this link again to start a report on November design.').waitFor();
+    assert.equal(await form.count(), 0, `${base}: another agreement's draft is not shown as the linked report`);
+    assert.deepEqual(await draft(), kept, `${base}: that draft and its identity are kept`);
+    await page.getByRole('button', { name: 'Resume draft' }).click(); await form.waitFor();
+    assert.equal(await page.locator('#agreement option:checked').innerText(), 'October engineering', `${base}: resuming opens that draft on its own terms`);
+    assert.equal(await page.getByLabel('Contributions', { exact: true }).inputValue(), 'October work in progress');
+
     // A link naming a record this account can't see selects nothing and says so; it never falls back to another.
     await page.evaluate(key => localStorage.removeItem(key), draftKey);
     for (const [link, kind] of [[`?agreement=${'d'.repeat(8)}-dddd-4ddd-8ddd-${'d'.repeat(12)}`, 'agreement'], [`?request=${'e'.repeat(8)}-eeee-4eee-8eee-${'e'.repeat(12)}`, 'request']]) {

@@ -11,9 +11,15 @@ jobs:
         with:
           node-version: 24.22.0
       - run: npm install -g pnpm@12.14.0
-      # CI passes only on release-candidate commits; a dev commit links Proto's SDK checkout, which isn't here.
-      - run: node scripts/release-mode.mjs
-      - run: pnpm install --frozen-lockfile
+      # A release candidate installs exactly its lockfile. A development commit links Proto's SDK checkout, which
+      # isn't here, so this run tests it against the vendored tarball instead; that build is never uploaded.
+      - id: sdk
+        run: |
+          if node scripts/release-mode.mjs; then
+            echo "mode=release" >> "$GITHUB_OUTPUT"; pnpm install --frozen-lockfile
+          else
+            echo "mode=dev" >> "$GITHUB_OUTPUT"; node scripts/release-mode.mjs --use-vendored && pnpm install --no-frozen-lockfile
+          fi
       - run: pnpm typecheck
       - run: pnpm build
       - run: pnpm test
@@ -24,7 +30,8 @@ jobs:
         with:
           name: browser-failures
           path: .test-artifacts/browser-failures/
-      - uses: actions/upload-artifact@v4
+      - if: steps.sdk.outputs.mode == 'release'
+        uses: actions/upload-artifact@v4
         with:
           name: invoices-frontend
           path: dist/

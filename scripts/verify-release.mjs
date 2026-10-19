@@ -9,6 +9,8 @@ import { changedSince } from './source-tree.mjs';
 const id = process.argv[2], root = resolve(process.env.RELEASES_ROOT ?? '.test-artifacts/releases');
 if (!/^[0-9a-f]{64}$/.test(id ?? '')) { console.error('Usage: node scripts/verify-release.mjs <release id>'); process.exit(2); }
 const record = JSON.parse(readFileSync(join(root, `${id}.provenance.json`), 'utf8'));
+// Releases frozen before source trees were recorded (H and earlier) can't be rebuilt from source; check their digest.
+if (!record.source?.tree) { console.error(`${id} has no recorded source tree, so it can't be rebuilt from source. Check its directory digest against its id instead.`); process.exit(2); }
 const candidate = await buildCandidate({ tree: record.source.tree, archive: join(root, `${id}.source.tar`) });
 try {
   const problems = [];

@@ -3,7 +3,11 @@
 Each release is a complete, immutable build directory, identified by the Proto runner's `digest()`.
 Local candidates only; nothing has been published or deployed.
 
-## Release I (in preparation; no digest yet)
+## Release J (in preparation; no digest yet)
+
+The report page keeps its place in the URL. It opens on the contributor's requests when there are any, and on the form when there are none. `/report?request=<id>` opens a request, and survives reload, back and forward. `/report?agreement=<id>` starts a new report on those terms; a saved draft on other terms is kept, and the page says so rather than showing it as the linked report. A link naming a record this account can't see selects nothing and says so. Development builds link Proto's SDK checkout (`link:../proto/packages/sdk`), and CI tests every commit, using the vendored tarball for development commits.
+
+## 7096493e (release I)
 
 After a definitive refusal, an invoice whose amount or note the contributor changes goes out under a new submission identity; an unchanged retry, and any resubmission after an unknown, session or forbidden outcome, keeps the original. The step script (`workflow/payee.mjs`) now classifies Proto's answers as the page does: a 5xx, unreadable or wrong-shape answer is unknown and resumable, 401 and 403 keep the identity, and only another 4xx is a refusal. Built on `@multiagency/sdk` 0.1.0: a report shows the owner's approved amount as its compensation, and a requested amount reads as "requested" until approved. Failed browser scenarios keep their error, page logs and screenshots under `.test-artifacts/browser-failures/`.
 

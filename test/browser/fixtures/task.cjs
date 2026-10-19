@@ -3,27 +3,47 @@ const { basename, join, resolve } = require('node:path');
 const { chromium } = require('./browser.cjs');
 
 const FAILURES = resolve('.test-artifacts/browser-failures');
+// A scenario that hasn't finished in this time fails by name (with diagnostics) instead of hanging the run.
+const LIMIT_MS = Number(process.env.BROWSER_SCENARIO_LIMIT_MS || 5 * 60_000);
 
-/**
- * Keeps what a failed scenario leaves behind: its name and error, every page's console and page errors, and a
- * screenshot of each page still open. Returns the directory.
- */
-function keepFailure(task, scenario, error, pages) {
+/** Writes a failed scenario's name, error and every page's console and page errors, synchronously. Returns the directory. */
+function keepRecord(task, scenario, error, pages) {
   const dir = join(FAILURES, `${new Date().toISOString().replace(/[:.]/g, '-')}-${task}-${scenario}`);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, 'error.txt'), `${task} › ${scenario}\n\n${error?.stack ?? error}\n`);
-  return Promise.all(pages.map(async ({ page, log }, i) => {
-    writeFileSync(join(dir, `page-${i}.log`), `${page.url()}\n${log.join('\n')}\n`);
-    if (!page.isClosed()) await page.screenshot({ path: join(dir, `page-${i}.png`), fullPage: true }).catch(() => {});
-  })).then(() => dir);
+  pages.forEach(({ page, log }, i) => writeFileSync(join(dir, `page-${i}.log`), `${page.url()}\n${log.join('\n')}\n`));
+  return dir;
+}
+/** Keeps what a failed scenario leaves behind: the record above, plus a screenshot of each page still open. */
+async function keepFailure(task, scenario, error, pages) {
+  const dir = keepRecord(task, scenario, error, pages);
+  await Promise.all(pages.map(({ page }, i) => page.isClosed() ? null : page.screenshot({ path: join(dir, `page-${i}.png`), fullPage: true }).catch(() => {})));
+  return dir;
+}
+
+/**
+ * Fails the process unless every registered scenario ran to completion, passed or failed. A scenario awaiting
+ * something that never settles lets Node exit early with status 0, which would otherwise read as a pass.
+ */
+function requireEvery(task, scenarios, ran, running) {
+  process.on('exit', () => {
+    const missing = scenarios.filter(scenario => !ran.has(scenario.name)).map(scenario => scenario.name);
+    if (!missing.length) return console.log(`${task}: ${ran.size} of ${scenarios.length} scenarios ran`);
+    process.exitCode = 1;
+    console.error(`${task}: ${ran.size} of ${scenarios.length} scenarios ran; did not run to completion: ${missing.join(', ')}`);
+    const { scenario, pages } = running();
+    if (scenario) console.error(`Kept failure diagnostics for ${scenario}: ${keepRecord(task, scenario, 'Did not finish: the process ran out of work while this scenario was still waiting.', pages)}`);
+  });
 }
 
 /** One browser per task; fresh contexts, diagnostics and failures remain isolated per scenario. */
 async function runTask(scenarios) {
   const root = resolve(process.argv[2] || 'dist'), task = basename(process.argv[1], '.cjs');
+  const ran = new Set();
+  let current, pages = [];
+  requireEvery(task, scenarios, ran, () => ({ scenario: current, pages }));
   const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE });
   // Every page a scenario opens records its console and page errors, so a failure can be traced afterwards.
-  let pages = [];
   const newPage = browser.newPage.bind(browser);
   browser.newPage = async options => {
     const page = await newPage(options), log = [];
@@ -36,14 +56,17 @@ async function runTask(scenarios) {
   try {
     for (const scenario of scenarios) {
       console.log(`Scenario: ${scenario.name}`);
-      pages = [];
-      try { await scenario(browser, root); }
+      current = scenario.name; pages = [];
+      let timer;
+      try {
+        await Promise.race([scenario(browser, root), new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${scenario.name} did not finish within ${LIMIT_MS / 1000}s`)), LIMIT_MS); })]);
+      }
       catch (error) {
         console.error(error); process.exitCode = 1;
         console.error(`Kept failure diagnostics for ${scenario.name}: ${await keepFailure(task, scenario.name, error, pages)}`);
       }
-      finally { for (const context of browser.contexts()) await context.close(); }
+      finally { clearTimeout(timer); ran.add(scenario.name); current = undefined; for (const context of browser.contexts()) await context.close(); }
     }
   } finally { await browser.close(); }
 }
-module.exports = { keepFailure, runTask: scenarios => runTask(scenarios).catch(error => { console.error(error); process.exitCode = 1; }) };
+module.exports = { keepFailure, requireEvery, runTask: scenarios => runTask(scenarios).catch(error => { console.error(error); process.exitCode = 1; }) };

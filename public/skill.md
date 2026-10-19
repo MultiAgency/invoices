@@ -1,7 +1,7 @@
 ---
 name: multiagency-builder-onboarding
 description: Let a contributor's own agent submit their contribution reports to a MultiAgency Invoices entry and follow each report to its payment record, using an agent connection the contributor created. Use when a contributor asks their coding agent to report their work and track its review and payment on this host.
-version: invoices-I (contract @multiagency/sdk 0.1.0 `./payee`; local and simulated)
+version: invoices-J (contract @multiagency/sdk 0.1.0 `./payee`; local and simulated)
 ---
 
 # Report work and follow it to payment
@@ -12,7 +12,7 @@ version: invoices-I (contract @multiagency/sdk 0.1.0 `./payee`; local and simula
 
 ## Supported in this release
 
-- **Release:** Invoices I. **Contract:** `@multiagency/sdk` 0.1.0, `./payee` entry (`payeeClient`). Capability IDs keep their `supplier-*-v1` wire names.
+- **Release:** Invoices J. **Contract:** `@multiagency/sdk` 0.1.0, `./payee` entry (`payeeClient`). Capability IDs keep their `supplier-*-v1` wire names.
 - **Local and simulated:** demonstrated end to end against an isolated Proto stack with a simulated provider and wallet. This covers the connection, report, owner review, payout, "paid" and revocation.
 - **Deployed:** not available. No hosted entry offers agent connections yet; do not assume one does.
 - **Capability check:** use this only where `GET /api/capabilities` lists `supplier-agent-connections-v1`.
