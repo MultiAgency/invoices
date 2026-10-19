@@ -1,6 +1,7 @@
 const { chromium: engine } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const { mkdirSync, appendFileSync } = require('node:fs');
 const { join } = require('node:path');
+const { conformingRoute } = require('./contract.cjs');
 
 /** Shared context isolation and diagnostics. The runner removes artifacts for successful suites. */
 let sequence = 0;
@@ -12,7 +13,7 @@ function protectRoutes(target) {
   const wrappers = new WeakMap();
   target.route = (url, handler, options) => {
     if (!wrappers.has(handler)) wrappers.set(handler, async (route, request) => {
-      try { await handler(route, request); }
+      try { await handler(conformingRoute(route), request); }
       catch (error) {
         fixtureFailed = true;
         const message = error instanceof Error ? error.stack : String(error);

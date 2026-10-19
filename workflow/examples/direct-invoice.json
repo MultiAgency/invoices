@@ -1,0 +1,6 @@
+{
+  "name": "direct-invoice",
+  "story": "Send an invoice: an agreed supplier invoices for finished work; the owner approves the held payout.",
+  "payee": { "account": "payee.near" },
+  "invoice": { "amount": "1.25", "note": "October design work" }
+}

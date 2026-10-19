@@ -1,0 +1,10 @@
+{
+  "name": "contribution-report",
+  "story": "Send an invoice (report variant): a contributor reports work under a recorded agreement; the owner sets compensation before any payment is prepared.",
+  "payee": { "account": "payee.near" },
+  "report": {
+    "contributions": "Extracted the supplier frontend into its own release",
+    "assessment": "Validated against local Proto with the simulated provider",
+    "evidence": ["https://example.test/pull/1"]
+  }
+}

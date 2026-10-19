@@ -1,0 +1,5 @@
+{
+  "name": "sally-order",
+  "story": "Sally's purchase order: the supplier files against an owner-authorized, funded work order with fixed terms.",
+  "payee": { "account": "payee.near" }
+}

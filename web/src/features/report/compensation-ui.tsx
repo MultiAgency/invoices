@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { CompensationReport, CompensationRequest } from "../../../../src/compensation-contract";
+import type { CompensationReport, CompensationRequest } from "@multiagency/sdk/payee";
 import { Field, FieldLabel, FieldDescription, FieldGroup } from "../../components/ui/field";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
