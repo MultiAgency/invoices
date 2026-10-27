@@ -7,6 +7,7 @@ import { payeeCommands, payeeQueries } from "../../app/queries";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
+import { projectRef, recordsProject } from "../../shared/project";
 import { usdc, when, WORDS } from "./words";
 
 const wordsFor = (status: string) => WORDS[status]?.[0] ?? status;
@@ -20,10 +21,12 @@ export function RequestWork({ account, onRequested }: { account: string; onReque
   const [message, setMessage] = useState(saved.unreadable ? "The saved draft could not be read. Check your work orders before making another request."
     : saved.draft ? "A previous request is retained. Check your work orders before retrying; keep its original terms if the outcome is unknown." : "");
   const [sending, setSending] = useState(false);
+  // Only a project the contract records is sent or shown, so the page never claims to have saved one it dropped.
+  const project = recordsProject(payeeWorkOrderRequest.shape) ? projectRef(location.search) : null;
   async function send(event: React.FormEvent) {
     event.preventDefault();
     if (sending) return;
-    const draft = { submission, note, amount, date, until: date + "T23:59:59.999Z" };
+    const draft = { submission, note, amount, date, until: date + "T23:59:59.999Z", ...(project && { project }) };
     const { date: _date, ...fields } = draft;
     // Terms the contract would refuse are corrected here, before anything is saved or sent.
     const request = payeeWorkOrderRequest.safeParse(fields);
@@ -53,6 +56,7 @@ export function RequestWork({ account, onRequested }: { account: string; onReque
         <div className="flex flex-col gap-2"><Label htmlFor="work-request-amount">Work order total (USDC)</Label><Input id="work-request-amount" required inputMode="decimal" autoComplete="off" placeholder="250" value={amount} onChange={e => setAmount(e.target.value)} /></div>
         <div className="flex flex-col gap-2"><Label htmlFor="work-request-until">Deadline (UTC)</Label><Input id="work-request-until" required type="date" value={date} onChange={e => setDate(e.target.value)} /></div>
       </div>
+      {project && <p id="work-request-project" className="text-sm text-muted-foreground">For project <strong>{project}</strong></p>}
       <p id="work-request-message" role="status" className="text-sm">{message}</p>
       <Button id="work-request-submit" type="submit" className="self-start" disabled={sending}>{sending ? "Sending request…" : "Send work order request"}</Button>
     </form>
