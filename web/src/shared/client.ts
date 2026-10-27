@@ -1,7 +1,8 @@
 import { payeeClient, type Failure, type Result } from "@multiagency/sdk/payee";
+import { EMBED_BASE_KEY, embeddedBase } from "./embed";
 
 /** The payee instance this page serves: the agency's root intake, or one owner's scoped entry. */
-export const BASE = location.pathname.match(/^\/i\/own-[0-9a-f]{24}(?=\/|$)/)?.[0] ?? "";
+export const BASE = embeddedBase((globalThis as Record<string, unknown>)[EMBED_BASE_KEY]) ?? location.pathname.match(/^\/i\/own-[0-9a-f]{24}(?=\/|$)/)?.[0] ?? "";
 
 /**
  * Proto's platform client. Same-origin, never retries, never mints an identity: a lost, failed (5xx) or

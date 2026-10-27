@@ -9,12 +9,13 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
+    "build:remote": "node scripts/build-remote.mjs",
     "start": "node scripts/start.mjs",
     "freeze": "node scripts/freeze.mjs",
     "verify-release": "node scripts/verify-release.mjs",
     "typecheck": "tsc -p web",
     "test": "node --test test/*.test.mjs",
-    "test:browser": "node test/browser/invoices.cjs && node test/browser/report-payout.cjs && node test/browser/scoped.cjs && node test/browser/workflow.mjs"
+    "test:browser": "node test/browser/invoices.cjs && node test/browser/report-payout.cjs && node test/browser/scoped.cjs && node test/browser/workflow.mjs && node test/browser/remote.cjs"
   },
   "dependencies": {
     "@fastnear/near-connect": "^0.14.1",
@@ -33,6 +34,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@module-federation/rsbuild-plugin": "^2.4.0",
     "@rsbuild/core": "^2.2.12",
     "@rsbuild/plugin-react": "^2.1.1",
     "@tailwindcss/postcss": "^4.3.3",

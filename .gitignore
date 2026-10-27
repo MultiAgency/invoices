@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-remote/
 .test-artifacts/
 .env*
 !.env.example

@@ -10,6 +10,7 @@ Requires Node 24.22.0 (CI and the image pin it) and pnpm 12.14.0 (`packageManage
 pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm build
+pnpm build:remote   # optional: the Module Federation remote, in dist-remote/
 pnpm test
 pnpm exec playwright install chromium
 pnpm test:browser
@@ -48,6 +49,6 @@ Public entries: `/` for invoice/work-order tasks and `/report` for contribution 
 
 Standalone build, typecheck, offline browser journeys and scoped/mobile checks pass. Proto's simulated-provider E2E passes invoice/owner-approval/settlement, lost responses, work-order requests, contribution-report review and shared agent access. No live credentials, owner actions, transfers or production deployment were performed. Browser tests use offline wallet/provider fixtures; source and built-asset tests are distinct.
 
-This is an independent static frontend release, not yet an everything-dev Module Federation remote. No source checkout is needed at build/runtime. Contract schemas and payee types come from Proto's `@multiagency/sdk`, vendored as a pinned tarball in `vendor/` with its sha256 and provenance; update it only by vendoring a new reviewed tarball. Local UI components are intentionally owned snapshots; `source-provenance.json` is the historical extraction record of their upstream hashes.
+This is an independent static frontend release. It is also built as a Module Federation remote (`pnpm build:remote`, exposing `./Invoices`) for a host app; see [embedding](docs/embedding.md). No real host has loaded it yet. No source checkout is needed at build/runtime. Contract schemas and payee types come from Proto's `@multiagency/sdk`, vendored as a pinned tarball in `vendor/` with its sha256 and provenance; update it only by vendoring a new reviewed tarball. Local UI components are intentionally owned snapshots; `source-provenance.json` is the historical extraction record of their upstream hashes.
 
 See `../proto/docs/invoices-extraction.md` for the backend contract, permissions, state preservation and release instructions. The embedded Proto page remains a fallback only when no independent frontend origin is configured; frontend outages do not automatically switch products.
