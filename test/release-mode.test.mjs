@@ -3,10 +3,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { freezeRefusal } from '../scripts/release-mode.mjs';
+import { freezeRefusal, sdkMode, useLink, useVendored } from '../scripts/release-mode.mjs';
 
 const gate = resolve('scripts/release-mode.mjs');
 const check = spec => {
@@ -32,4 +32,18 @@ test('a candidate freezes only from a dist/ built in release mode', () => {
   assert.match(freezeRefusal({ tarball, built: 'link' }), /^dist\/ was built with link, not multiagency-sdk-0\.0\.1\.tgz: rebuild in release mode$/);
   assert.match(freezeRefusal({ tarball, built: undefined }), /built with no recorded SDK/);
   assert.match(freezeRefusal({ tarball, built: 'multiagency-sdk-0.0.0.tgz' }), /built with multiagency-sdk-0\.0\.0\.tgz/);
+});
+
+test('the vendored tarball is the default and a local SDK link is an explicit, reversible opt-in', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'invoices-link-'));
+  mkdirSync(join(dir, 'vendor')); writeFileSync(join(dir, 'vendor', 'multiagency-sdk-0.1.0.tgz'), '');
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ dependencies: { '@multiagency/sdk': 'file:vendor/multiagency-sdk-0.1.0.tgz' } }));
+  assert.equal(sdkMode(dir).mode, 'release');
+  assert.equal(useLink(dir), '../sdk/packages/sdk', 'the default sibling checkout');
+  assert.deepEqual(sdkMode(dir), { mode: 'dev', spec: 'link:../sdk/packages/sdk' });
+  assert.equal(useLink(dir, '../elsewhere/packages/sdk'), '../elsewhere/packages/sdk');
+  assert.equal(JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')).dependencies['@multiagency/sdk'], 'link:../elsewhere/packages/sdk');
+  assert.equal(useVendored(dir), 'multiagency-sdk-0.1.0.tgz');
+  assert.equal(sdkMode(dir).mode, 'release', 'switching back restores the release mode');
+  for (const bad of ['', 'a b', 'x;rm -rf', '$(id)', '../.../x']) assert.throws(() => useLink(dir, bad), /not a usable path/, bad);
 });

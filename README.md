@@ -4,7 +4,7 @@ Standalone contributor frontend for invoice submission/status, work-order reques
 
 ## Local build and checks
 
-Requires Node 24.22.0 (CI and the image pin it) and pnpm 12.14.0 (`packageManager`).
+Requires Node 24.22.0 (CI and the image pin it) and pnpm 12.14.0 (`packageManager`). Nothing else: a fresh clone installs, type-checks, builds and passes `pnpm test` with only those two, because the SDK is the vendored tarball in `vendor/`. (`pnpm test:browser` also needs Playwright's Chromium, installed by the command below.)
 
 ```sh
 pnpm install --frozen-lockfile
@@ -19,20 +19,20 @@ pnpm start
 `pnpm start` stages `dist/` as a release and serves it with Proto's shared release server (`@multiagency/sdk` `release-server`) at http://127.0.0.1:3011. Set `PORT`, `HOST` or `RELEASES_ROOT` to change this; the default root is `.test-artifacts/local-releases`. The server has no authenticated API and needs no Proto configuration or credentials. For a working local product, run a simulated Proto backend with `INVOICES_FRONTEND_URL=http://127.0.0.1:3011` and open the **Proto payee origin**, not the asset origin. Never point development at a live executor.
 
 **SDK modes.** The `@multiagency/sdk` dependency spec decides the mode:
-- **Development:** `link:../proto/packages/sdk`, Proto's SDK directory. It's generated and git-ignored, so in a fresh Proto checkout run `pnpm sdk:dev` there once (it then watches and keeps the link current; `--once` stages without watching).
-- **Release candidate:** `file:vendor/multiagency-sdk-<version>.tgz`, with its `.sha256` and `.provenance.json`.
+- **Default, and release candidate:** `file:vendor/multiagency-sdk-<version>.tgz`, with its `.sha256` and `.provenance.json`. This is what a fresh clone installs, so no sibling checkout is needed.
+- **Opt-in development:** to work against a local SDK checkout, run `pnpm sdk:link [path]` (default `../sdk/packages/sdk`, the generated, git-ignored `packages/sdk` of a checkout of [MultiAgency/sdk](https://github.com/MultiAgency/sdk); run its `pnpm sdk:dev` once first), then `pnpm install --no-frozen-lockfile`. `pnpm sdk:vendored` switches back. Neither change is meant to be committed, and `pnpm freeze` and the Docker image refuse a link.
 
-The drift test checks the tarball, lockfile integrity and provenance only on a release candidate. In both modes it checks every import and declared capability against the installed SDK.
+The drift test checks the tarball, lockfile integrity and provenance whenever the tarball is the dependency (the default). In both modes it checks every import and declared capability against the installed SDK.
 
 `pnpm freeze` builds a candidate from the working tree's exact source: a git tree object of tracked and untracked files (minus `.gitignore`), written through a temporary index, so nothing is committed, stashed or moved. It's built in its own directory against the pinned tarball and staged read-only under `.test-artifacts/releases/<digest>/`. The provenance record holds the base commit, the tree and the changed paths. The tree is also kept as `<digest>.source.tar`, with a `.sha256` sidecar, so the recorded source survives `git gc` without a commit or ref. `pnpm verify-release <digest>` rebuilds from that tree (or from the archive when the tree object is gone), requires the same digest and an intact frozen directory, and lists where the working tree has changed since. Freezing and the Docker image refuse a `link:` with "dev link: build from a release candidate" (`scripts/release-mode.mjs`).
 
-From the sibling Proto checkout, the isolated simulated-provider suite accepts this actual build:
+From a checkout of the backend repository (`MultiAgency/sdk`, formerly `proto`), its isolated simulated-provider suite accepts this actual build:
 
 ```sh
-node test/e2e/run.mjs --invoices-dist ../dao/invoices/dist payments.spec.mjs agent-access.spec.mjs
+node test/e2e/run.mjs --invoices-dist ../invoices/dist payments.spec.mjs agent-access.spec.mjs
 ```
 
-When entering through the DAO workspace symlink, use the unambiguous absolute build path `/Users/jlwaugh/agencies/dao/invoices/dist`.
+Pass the build path relative to that checkout, or an absolute path on your machine.
 
 ## Release boundary
 
@@ -50,4 +50,4 @@ Standalone build, typecheck, offline browser journeys and scoped/mobile checks p
 
 This is an independent static frontend release, not yet an everything-dev Module Federation remote. No source checkout is needed at build/runtime. Contract schemas and payee types come from Proto's `@multiagency/sdk`, vendored as a pinned tarball in `vendor/` with its sha256 and provenance; update it only by vendoring a new reviewed tarball. Local UI components are intentionally owned snapshots; `source-provenance.json` is the historical extraction record of their upstream hashes.
 
-See `../proto/docs/invoices-extraction.md` for the backend contract, permissions, state preservation and release instructions. The embedded Proto page remains a fallback only when no independent frontend origin is configured; frontend outages do not automatically switch products.
+See `docs/invoices-extraction.md` in the backend repository ([MultiAgency/sdk](https://github.com/MultiAgency/sdk)) for the backend contract, permissions, state preservation and release instructions. The embedded Proto page remains a fallback only when no independent frontend origin is configured; frontend outages do not automatically switch products.

@@ -1,5 +1,5 @@
-// The SDK dependency spec decides the mode: `link:` for development against Proto's SDK checkout, or the vendored
-// tarball for a release candidate. Release steps (freeze, Docker, CI) run only on a release candidate.
+// The SDK dependency spec decides the mode: the vendored tarball (the default, and a release candidate), or `link:` for
+// opt-in development against a local SDK checkout (`pnpm sdk:link`). Release steps (freeze, Docker, CI) run only on a release candidate.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -45,9 +45,22 @@ export function useVendored(dir = '.') {
   return tarballs[0];
 }
 
+/**
+ * Opt-in local SDK development: point package.json at a sibling SDK checkout's generated `packages/sdk` (run `pnpm sdk:dev`
+ * there once). Nothing is committed; `pnpm sdk:vendored` switches back. Release steps refuse a link.
+ */
+export function useLink(dir = '.', target = '../sdk/packages/sdk') {
+  if (!/^[\w./~-]+$/.test(target) || /(^|\/)\.\.\.|\0/.test(target)) throw new Error(`not a usable path: ${JSON.stringify(target)}`);
+  const file = join(dir, 'package.json'), pkg = JSON.parse(readFileSync(file, 'utf8'));
+  pkg.dependencies[SDK] = `link:${target}`;
+  writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n');
+  return target;
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   try {
-    if (process.argv[2] === '--use-vendored') console.log(`development commit: testing against vendor/${useVendored()}`);
+    if (process.argv[2] === '--use-link') console.log(`development: linked ${useLink('.', process.argv[3])}; run pnpm install --no-frozen-lockfile`);
+    else if (process.argv[2] === '--use-vendored') console.log(`development commit: testing against vendor/${useVendored()}`);
     else console.log(`${SDK}: ${requireRelease().tarball}`);
   } catch (error) { console.error(error.message); process.exit(1); }
 }
